@@ -36,13 +36,15 @@ class Student: #Mert
 
     def update_grade(self, course, grade):
         """Modify grade of course obj"""
-        self.enroll(course,grade)
+        if courses in self.courses:
+            self.courses[course] = grade
+
 
     def calculate_gpa(self):
         """Returns GPA of student's courses"""
         pts=0
         creds=0
-        for course, grade in self.courses:
+        for course, grade in self.courses.items():
             pts+=gradeDict.get(grade, 0)*course.CREDITS
             creds+=course.CREDITS
         return 0 if creds == 0 else round(pts/creds, 2)
@@ -50,11 +52,12 @@ class Student: #Mert
 
     def get_courses(self):
         """Return list of students courses objs"""
-        return [course for course, v in self.courses]
+        return [course for course in self.courses.keys()]
 
     def get_course_info(self):
-        """Return set including students courses code, grade, credits."""
-        return {(k.course_code, v, k.CREDITS) for k,v in self.courses}
+        """Return set including student's course code, grade, credits."""
+        return {(course.course_code, grade, course.CREDITS) 
+                for course, grade in self.courses.items()}
 
     def __str__(self):
         return f"{self.name} ({self.student_id}) GPA: {self.calculate_gpa()}"
