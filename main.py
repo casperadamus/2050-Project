@@ -17,6 +17,9 @@ class Course: #Mert
         """Return total amount of students"""
         return len(self.students)
 
+    def __str__(self):
+        return f"{self.course_code} ({self.CREDITS} credits)"
+
 class Student: #Mert
     def __init__(self,id,name,courses={}):
         self.student_id = id #string
@@ -42,7 +45,7 @@ class Student: #Mert
         return 0 if creds == 0 else round(pts/creds)
 
 
-    def get_courses(self):
+    def get_courses(self):a
         """Return list of students courses objs"""
         return [course for course, v in self.courses]
 
