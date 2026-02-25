@@ -45,7 +45,7 @@ class Student: #Mert
         return 0 if creds == 0 else round(pts/creds)
 
 
-    def get_courses(self):a
+    def get_courses(self)
         """Return list of students courses objs"""
         return [course for course, v in self.courses]
 
