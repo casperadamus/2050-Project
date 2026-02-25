@@ -5,11 +5,11 @@ gradeDict = {'A':4.0,'A-':3.7,'B+':3.3,'B':3.0,'B-':2.7,'C+':2.3,'C': 2.0,'C-': 
 
 class Course: #Mert
     """Class blueprint for a course."""
-    def __init__(self, code, creds, students=[]):
+    def __init__(self, code, creds, students=None):
         """Initializes 3 public variables for course"""
         self.course_code = code #string (e.g. "CSE1010")
         self.CREDITS = creds #final integer (shouldn't change)
-        self.students = students #List (Student objects)
+        self.students = students if students is not None else [] #List (Student objects)
 
     def add_student(self, student):
         """Adds a student object to the students list"""
@@ -20,11 +20,14 @@ class Course: #Mert
         """Return total amount of students"""
         return len(self.students)
 
+    def __str__(self):
+        return f"{self.course_code} ({self.CREDITS} credits)"
+
 class Student: #Mert
-    def __init__(self,id,name,courses={}):
+    def __init__(self,id,name,courses= None):
         self.student_id = id #string
         self.name = name #string
-        self.courses = courses #dict
+        self.courses = courses if courses is not None else {} #dict  def enroll(self, course, grade):
     
     def enroll(self, course, grade):
         """Student enroll w/ grade in course; Updates course.students list"""
@@ -52,6 +55,9 @@ class Student: #Mert
     def get_course_info(self):
         """Return set including students courses code, grade, credits."""
         return {(k.course_code, v, k.CREDITS) for k,v in self.courses}
+
+    def __str__(self):
+        return f"{self.name} ({self.student_id}) GPA: {self.calculate_gpa()}"
     
 class University: #Mert
     def __init__(self):
