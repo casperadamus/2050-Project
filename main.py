@@ -102,13 +102,13 @@ class University: #Mert
 
 
 #CSV reading/writing functions
-def populate_courses(univ):
+def populate_courses(univ): #Ismam
     with open('course_catalog.csv', 'r') as file:
         for line in file.readlines()[1:]:
             course_code, credits = line.strip().split(',')
             univ.add_course(course_code, int(credits))
     
-def populate_students(univ):
+def populate_students(univ): #Ismam
     with open('university_data.csv', 'r') as file:
         for row in csv.DictReader(file):
             student = univ.get_student(row['student_id'])
@@ -124,7 +124,7 @@ def populate_students(univ):
 
 
 
-def main():
+def main(): #Ismam
     ex_uni = University()
     print("Populating course catalog...", end=" ")
     populate_courses(ex_uni)
