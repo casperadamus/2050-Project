@@ -165,6 +165,24 @@ class TestUniversity(unittest.TestCase):
         self.assertEqual(len(self.university.students), 1)
         self.assertIs(student1, student2)
 
+    def test_get_nonexistent_course(self):
+        """test getting a course that does not exist"""
+        course = self.university.courses.get("NONEXISTENT")
+        self.assertIsNone(course)
+
+    def test_get_course(self):
+        """test retrieving course by code"""
+        self.university.add_course("CSE2050", 4)
+
+        course = self.university.get_course("CSE2050")
+        if course is not None:
+            self.assertEqual(course.course_code, "CSE2050")
+            self.assertEqual(course.CREDITS, 4)
+
+        def test_get_nonexistent_course(self):
+            """test retrieving student that does not exist"""
+            course = self.university.get_course("CSE2050")
+            self.assertIsNone(course)
     
 
 
