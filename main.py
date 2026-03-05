@@ -31,7 +31,7 @@ class Course: #Mert
 
     def __str__(self) -> str:
         """Return a human-readable course information"""
-        return f"{self.course_code} ({self.CREDITS} credits)"
+        return f"{self.course_code}: ({self.CREDITS} credits)"
 
 class Student: #Mert
     """Represents a student
@@ -85,7 +85,7 @@ class University: #Mert
     
     Attributes
     ----------
-    student : dict
+    students : dict
         Maps id to student obj
     courses : dict
         Maps code to course obj
@@ -126,6 +126,9 @@ class University: #Mert
         course = self.courses.get(course_code)
         if course is None: raise KeyError(f"course '{course_code}' not found.")
         return course.students
+    
+    def get_common_students(self, course1:Course, course2:Course) -> set:
+        return set(self.get_students_in_course(course1)) & set(self.get_students_in_course(course2))
 
 def populate_courses(univ:University) -> None: #Ismam
     """Populates the University with course information in course_catalog.csv
@@ -160,11 +163,59 @@ def populate_students(univ:University) -> None: #Ismam
             # else:
             #     print("Duplicate or invalid student ID found:", row['student_id'])
 
+ex_uni = University()
+print("Populating course catalog...", end=" ")
+populate_courses(ex_uni)
+print("OK.")
+print("Populating students and enrollments...", end=" ")
+populate_students(ex_uni)
+print("OK.")
+
+"""
+Demonstrations
+--------------
+Get the list of students enrolled in a course X
+Print GPA of a student X
+Print all the courses and course info (grades and credits) for a student 
+Calculate mean and median for the GPA of all students in the university
+Print common students in two different courses (Intersection)
+"""
+
 if __name__=="__main__":
-    ex_uni = University()
-    print("Populating course catalog...", end=" ")
-    populate_courses(ex_uni)
-    print("OK.")
-    print("Populating students and enrollments...", end=" ")
-    populate_students(ex_uni)
-    print("OK.")
+    #1
+    listStudents = ex_uni.get_students_in_course("CSE1010")
+    if len(ex_uni.students) > 0: firstStudentObj = list(ex_uni.students.values())[0]
+    else: firstStudentObj = None
+    #2
+    if firstStudentObj is not None:
+        print(firstStudentObj.name + "'s GPA: " + str(firstStudentObj.calculate_gpa()))
+        print(f"Course: (credit) | grade for {firstStudentObj.name}")
+        for course, grade in firstStudentObj.courses.items():
+            print(str(course) + " | Grade: " + grade) 
+    else: print("No students found to demonstrate GPA")
+    #mean:
+    totalGPA = 0
+    gpaList = list()
+    for student in ex_uni.students.values(): 
+        studentGPA = student.calculate_gpa()
+        totalGPA+=studentGPA
+        gpaList.append(studentGPA)
+    length_gpaList = len(gpaList)
+    meanGPA = 0
+    if length_gpaList != 0: meanGPA = round(totalGPA/length_gpaList,3)
+    else: raise KeyError("Cannot divide by 0, no classes found.")
+    #median:
+    gpaList.sort()
+    medianGPA = 0
+    print(length_gpaList)
+    if(length_gpaList%2==1): #odd
+        medianGPA = gpaList[int(((length_gpaList+1)/2)-1)]
+    elif(length_gpaList%2==0): #even
+        medianGPA = round((gpaList[int((length_gpaList/2)-1)] + gpaList[int(length_gpaList/2)])/2,3)
+
+    print("Mean GPA of all students: " + str(meanGPA))
+    print("Median GPA of all students: " + str(medianGPA))
+
+    print("Students in CSE1010 and CSE2050")
+    for i in ex_uni.get_common_students("CSE1010", "CSE2050"):
+        print(i)
