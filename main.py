@@ -181,15 +181,6 @@ print("OK.")
 print("Populating students and enrollments...", end=" ")
 populate_students(ex_uni)
 print("OK.")
-"""
-Demonstrations
---------------
-Get the list of students enrolled in a course X
-Print GPA of a student X
-Print all the courses and course info (grades and credits) for a student 
-Calculate mean and median for the GPA of all students in the university
-Print common students in two different courses (Intersection)
-"""
 
 if __name__=="__main__":
     #1
