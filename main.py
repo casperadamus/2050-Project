@@ -2,7 +2,7 @@ import csv
 
 #dict with etter grade to numbers
 gradeDict = {'A':4.0,'A-':3.7,'B+':3.3,'B':3.0,'B-':2.7,'C+':2.3,'C': 2.0,'C-': 1.7,'D':1.0,'F': 0.0}
-
+DEANGPA = 3.5
 class Course: #Mert
     """Represents a course
 
@@ -89,11 +89,13 @@ class University: #Mert
         Maps id to student obj
     courses : dict
         Maps code to course obj
-
+    deanslist : list
+        students with high GPA's
     """
     def __init__(self) -> None:
         """Initializes an University"""
         self.students, self.courses = dict(), dict()
+        self.deansList = []
 
     def add_course(self,course_code:str,credits:int) -> Course:
         """Adds a non-existing course to mapping"""
@@ -153,15 +155,24 @@ def populate_students(univ:University) -> None: #Ismam
     """
     with open('university_data.csv', 'r') as file:
         for row in csv.DictReader(file):
-            student = univ.get_student(row['student_id'])
-            if not student and len(row['student_id']) >= 8 and row['student_id'][:3] == "STU":
-                student = univ.add_student(row['student_id'], row['name'])
+            std_id = row['student_id']
+            student = univ.get_student(std_id)
+            if not student and len(std_id) >= 8 and std_id[:3] == "STU":
+                student = univ.add_student(std_id, row['name'])
                 for item in row['courses'].split(";"):
                     split = item.split(":")
                     course = univ.get_course(split[0])
                     if course and split[1] in gradeDict: student.enroll(course, split[1])
+                if univ.students[std_id].calculate_gpa() >= DEANGPA:
+                    univ.deansList.append(std_id)
             # else:
             #     print("Duplicate or invalid student ID found:", row['student_id'])
+
+def getDeansList(uni:University) -> list:
+    objList = []
+    for stdId in uni.deansList:
+        objList.append(uni.get_student(stdId))
+    return objList
 
 ex_uni = University()
 print("Populating course catalog...", end=" ")
@@ -170,7 +181,6 @@ print("OK.")
 print("Populating students and enrollments...", end=" ")
 populate_students(ex_uni)
 print("OK.")
-
 """
 Demonstrations
 --------------
@@ -207,7 +217,6 @@ if __name__=="__main__":
     #median:
     gpaList.sort()
     medianGPA = 0
-    print(length_gpaList)
     if(length_gpaList%2==1): #odd
         medianGPA = gpaList[int(((length_gpaList+1)/2)-1)]
     elif(length_gpaList%2==0): #even
@@ -219,3 +228,6 @@ if __name__=="__main__":
     print("Students in CSE1010 and CSE2050")
     for i in ex_uni.get_common_students("CSE1010", "CSE2050"):
         print(i)
+
+    print(f"Dean's List: (>={DEANGPA} gpa)")
+    for student in getDeansList(ex_uni): print(str(student))
