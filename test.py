@@ -1,14 +1,13 @@
 import unittest
 from main import Course, Student, University
-# test.py - casper 
-class TestCourse(unittest.TestCase):
+class TestCourse(unittest.TestCase): # casper
     """test cases for the course class"""
 
-    def setUp(self):
+    def setUp(self): 
         """setting up test"""
         self.course= Course("CSE2050", 4)
             
-    def  test_course_creation(self):
+    def  test_course_creation(self): # casper
         """test course creation"""
         self.assertIsInstance(self.course.course_code, str)
         self.assertEqual(self.course.course_code, "CSE2050")
@@ -48,7 +47,7 @@ class TestCourse(unittest.TestCase):
         self.assertEqual(self.course.get_student_count(), 2)
 
 
-class TestStudent(unittest.TestCase):
+class TestStudent(unittest.TestCase): # casper
     """Test cases for student class"""
 
     def setUp(self):
@@ -120,9 +119,9 @@ class TestStudent(unittest.TestCase):
         courses = self.student.get_courses()
         self.assertEqual(len(courses), 2)
         self.assertIn(self.course1, courses)
-        self.assertIn(self.course2, courses)
+        self.assertIn(self.course2, courses)    
 
-class TestUniversity(unittest.TestCase):
+class TestUniversity(unittest.TestCase): # casper
     """test cases for university class"""
 
     def setUp(self):
@@ -187,5 +186,5 @@ class TestUniversity(unittest.TestCase):
 
 
 
-if __name__ == '__main__':
+if __name__ == '__main__': # casper
     unittest.main()
