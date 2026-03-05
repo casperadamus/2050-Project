@@ -169,6 +169,13 @@ def populate_students(univ:University) -> None: #Ismam
             #     print("Duplicate or invalid student ID found:", row['student_id'])
 
 def getDeansList(uni:University) -> list:
+    """Converts the student id storing list from the University class to object list
+
+    Paramaters
+    ----------
+    univ : University
+        University Object
+    """
     objList = []
     for stdId in uni.deansList:
         objList.append(uni.get_student(stdId))
