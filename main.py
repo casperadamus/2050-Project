@@ -1,9 +1,87 @@
 import csv
+from datetime import date
 
 #dict with etter grade to numbers
 gradeDict = {'A':4.0,'A-':3.7,'B+':3.3,'B':3.0,'B-':2.7,'C+':2.3,'C': 2.0,'C-': 1.7,'D':1.0,'F': 0.0}
 DEANGPA = 3.5
+
+class EnrollmentRecord:
+    """represents a Enrollment Record
+
+    Attributes
+    ----------
+    student : Student
+        Student obj
+    enroll_date : string
+        Stores a "YYYY-MM-DD" of when object is created
+    """
+    def __init__(self, student, enroll_date):
+        """Initializes an enrollment record"""
+        self.student = student
+        self.enroll_date = enroll_date
+
+class Node:
+    """represents a Node for LinkedList
+    
+    Attributes
+    ----------
+    data : Any
+        Any type of data type
+    next : Node
+        Stores the next node in LinkedList
+    """
+    def __init__(self, data):
+        """Initializes a Node"""
+        self.data = data
+        self.next = None
+    
+class LinkedQueue: #FIFO
+    """Classic Singly LinkedQueue ADT
+
+    Attributes
+    ----------
+    _head : Node
+        Pointer to the first Node
+    _tail : Node
+        Pointer to the last Node
+    _len : int
+        Length of the Queue
+    """
+    def __init__(self):
+        self._head = None
+        self._tail = None
+        self._len = 0
+    def __len__(self): return(self._len)
+    def is_empty(self): return self._len == 0
+    def enqueue(self, item):
+        self._len += 1
+        newNode = Node(item)
+        if self._head is None: self._head = newNode
+        if self._tail is not None: self._tail.next = newNode
+        self._tail = newNode
+    def dequeue(self):
+        self._len -= 1
+        if self.is_empty(): raise ValueError
+        headNode = self._head
+        self._head = headNode.next
+        return headNode.item
+
 class Course: #Mert
+    def sort_enrolled(self, by, algorithm):
+        match algorithm:
+            case 'selection':
+                for i in self.students:
+                    minObj = self.students[i]
+                    for j in self.students:
+                        numObj = self.students[j]
+                        if by=='name' and (numObj.student.name[8:] > minObj.student.name[8:]): minObj = numObj
+                        if by=="id" and (numObj.student.student_id[3:] > minObj.student.name[3:]): minObj = numObj
+                        if by=="date" and (numObj.enroll_date > minObj.enroll_date): minObj = numObj
+                    self.students[i], minObj = minObj, self.students[i]
+            case 'insertion':
+                ...
+        ...
+
     """Represents a course
 
     Attributes
@@ -12,18 +90,25 @@ class Course: #Mert
         The course code
     CREDITS : int
         number of credits
+    capacity : int
+        # of students limit
     students : list
         Students enrolled in the course
+    waitlist : LinkedQueue
+        LinkedQueue ADT for students waiting to enroll
     """
-    def __init__(self, code:str, creds:int, students=None) -> None:
+    def __init__(self, code:str, creds:int, capacity:int, students=None) -> None:
         """Initialize a Course"""
         self.course_code = code
         self.CREDITS = creds
+        self.capacity = capacity
         self.students = students if students is not None else list()
+        self.waitlist = LinkedQueue()
 
     def add_student(self, student: Student) -> None:
         """Add a student to the course if not already enrolled"""
-        if student not in self.students: self.students.append(student)
+        if student not in self.students:
+            self.students.append(EnrollmentRecord(student))
 
     def get_student_count(self) -> int:
         """Returns the number of enrolled students"""
@@ -32,6 +117,19 @@ class Course: #Mert
     def __str__(self) -> str:
         """Return a human-readable course information"""
         return f"{self.course_code}: ({self.CREDITS} credits)"
+    
+    def request_enroll(self, student:Student, enroll_date=date.today()) -> None:
+        """Add a student to the course if capacity not full"""
+        if len(self.students) == self.capacity:
+            self.waitlist.enqueue(EnrollmentRecord(student, enroll_date))
+        else:
+            for enrollmentRecord in self.students:
+                if enrollmentRecord.student is not student: ValueError("Student is already enrolled.")
+            self.students.append(EnrollmentRecord(student))
+    
+    def drop(self, student_id:str, enroll_date_for_replacement=date.today()) -> None:
+        ... #remove the student from roster
+        if not self.waitlist.is_empty(): self.request_enroll(self.waitlist.dequeue(), enroll_date_for_replacement)
 
 class Student: #Mert
     """Represents a student
@@ -97,10 +195,10 @@ class University: #Mert
         self.students, self.courses = dict(), dict()
         self.deansList = []
 
-    def add_course(self,course_code:str,credits:int) -> Course:
+    def add_course(self,course_code:str,credits:int,capacity:int) -> Course:
         """Adds a non-existing course to mapping"""
         if course_code not in self.courses:
-            self.courses.setdefault(course_code, Course(course_code, credits))
+            self.courses.setdefault(course_code, Course(course_code, credits, capacity))
         return self.courses.get(course_code)
 
     def add_student(self, student_id:str, name:str) -> Student:
@@ -140,10 +238,17 @@ def populate_courses(univ:University) -> None: #Ismam
     univ : University
         University object
     """
-    with open('course_catalog.csv', 'r') as file:
-        for line in file.readlines()[1:]:
-            course_code, credits = line.strip().split(',')
-            if not univ.get_course(course_code): univ.add_course(course_code, int(credits))
+    # with open('course_catalog.csv', 'r') as file:
+    #     for line in file.readlines()[1:]:
+    #         course_code, credits = line.strip().split(',')
+    #         if not univ.get_course(course_code): univ.add_course(course_code, int(credits))
+
+    with open('course_catalog_CSE10_with_capacity.csv', 'r') as file:
+        for row in csv.DictReader(file):
+            course_id = row['course_id']
+            credits = int(row['credits'])
+            capacity = int(row['capacity'])
+            if not univ.get_course(course_id): univ.add_course(course_id, credits, capacity)
     
 def populate_students(univ:University) -> None: #Ismam
     """Populates the University with information from university_data.csv
@@ -229,3 +334,6 @@ if __name__=="__main__":
 
     print(f"Dean's List: (>={DEANGPA} gpa)")
     for student in getDeansList(ex_uni): print(str(student))
+
+listStudents = ex_uni.get_students_in_course("CSE1010")
+
