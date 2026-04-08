@@ -5,7 +5,7 @@ class TestCourse(unittest.TestCase): # casper
 
     def setUp(self): 
         """setting up test"""
-        self.course= Course("CSE2050", 4)
+        self.course= Course("CSE2050", 4, 100)
             
     def  test_course_creation(self): # casper
         """test course creation"""
@@ -52,8 +52,8 @@ class TestStudent(unittest.TestCase): # casper
 
     def setUp(self):
         self.student = Student("ABC1234", "1_Student")
-        self.course1 = Course("CSE2050", 4)
-        self.course2 = Course("MATH2110", 3)
+        self.course1 = Course("CSE2050", 4, 100)
+        self.course2 = Course("MATH2110", 3, 100)
 
     def test_student_creation(self):
         """test student creation"""
@@ -91,7 +91,7 @@ class TestStudent(unittest.TestCase): # casper
 
     def test_calculate_gpa_with_different_credits(self):
         """test gpa with different credits"""
-        course3 = Course("BIO101", 2)
+        course3 = Course("BIO101", 2, 100)
         
         self.student.enroll(self.course1, "A")
         self.student.enroll(self.course2, "B")
@@ -134,7 +134,7 @@ class TestUniversity(unittest.TestCase): # casper
 
     def test_add_course(self):
         """test adding courses to university"""
-        course = self.university.add_course("CSE2050", 4)
+        course = self.university.add_course("CSE2050", 4, 100)
         
         self.assertIsNotNone(course)
         self.assertEqual(course.course_code, "CSE2050")
@@ -142,8 +142,8 @@ class TestUniversity(unittest.TestCase): # casper
     
     def test_add_duplicate_course(self):
         """test duplicate courses are not added"""
-        course1 = self.university.add_course("CSE2050", 4)
-        course2 = self.university.add_course("CSE2050", 4)
+        course1 = self.university.add_course("CSE2050", 4, 100)
+        course2 = self.university.add_course("CSE2050", 4, 100)
 
         self.assertEqual(course1, course2)
         self.assertEqual(len(self.university.courses), 1)
@@ -171,7 +171,7 @@ class TestUniversity(unittest.TestCase): # casper
 
     def test_get_course(self):
         """test retrieving course by code"""
-        self.university.add_course("CSE2050", 4)
+        self.university.add_course("CSE2050", 4, 100)
 
         course = self.university.get_course("CSE2050")
         if course is not None:
