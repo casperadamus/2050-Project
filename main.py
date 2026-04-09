@@ -60,28 +60,46 @@ class LinkedQueue: #FIFO
         if self._tail is not None: self._tail.next = newNode
         self._tail = newNode
     def dequeue(self):
+        if self.is_empty():
+            raise ValueError("Queue is empty")
         self._len -= 1
-        if self.is_empty(): raise ValueError
-        headNode = self._head
-        self._head = headNode.next
-        return headNode.item
+        head_node = self._head
+        self._head = head_node.next
+        if self._head is None:
+            self._tail = None
+        return head_node.data
+
+
+def _enrollment_date_sort_key(enroll_date):
+    if isinstance(enroll_date, date):
+        return enroll_date.isoformat()
+    return str(enroll_date)
+
+
+def recursive_binary_search(records, target_id, low, high):
+    """Return index of EnrollmentRecord with student.student_id == target_id, or -1."""
+    if low > high:
+        return -1
+    mid = (low + high) // 2
+    mid_id = records[mid].student.student_id
+    if mid_id == target_id:
+        return mid
+    if mid_id > target_id:
+        return recursive_binary_search(records, target_id, low, mid - 1)
+    return recursive_binary_search(records, target_id, mid + 1, high)
+
+
+def _less_enrollment(rec_a, rec_b, by):
+    if by == "name":
+        return rec_a.student.name < rec_b.student.name
+    if by == "id":
+        return rec_a.student.student_id < rec_b.student.student_id
+    if by == "date":
+        return _enrollment_date_sort_key(rec_a.enroll_date) < _enrollment_date_sort_key(rec_b.enroll_date)
+    raise ValueError(f"Unknown sort key {by!r}")
+
 
 class Course: #Mert
-    def sort_enrolled(self, by, algorithm):
-        match algorithm:
-            case 'selection':
-                for i in self.students:
-                    minObj = self.students[i]
-                    for j in self.students:
-                        numObj = self.students[j]
-                        if by=='name' and (numObj.student.name[8:] > minObj.student.name[8:]): minObj = numObj
-                        if by=="id" and (numObj.student.student_id[3:] > minObj.student.name[3:]): minObj = numObj
-                        if by=="date" and (numObj.enroll_date > minObj.enroll_date): minObj = numObj
-                    self.students[i], minObj = minObj, self.students[i]
-            case 'insertion':
-                ...
-        ...
-
     """Represents a course
 
     Attributes
@@ -93,22 +111,27 @@ class Course: #Mert
     capacity : int
         # of students limit
     students : list
-        Students enrolled in the course
+        Enrolled roster: list of EnrollmentRecord
     waitlist : LinkedQueue
         LinkedQueue ADT for students waiting to enroll
+    enrolled_sorted_by : str | None
+        'name', 'id', or 'date' after sort_enrolled; None if order unknown
     """
-    def __init__(self, code:str, creds:int, capacity:int, students=None) -> None:
+    def __init__(self, code: str, creds: int, capacity: int, students=None) -> None:
         """Initialize a Course"""
         self.course_code = code
         self.CREDITS = creds
         self.capacity = capacity
-        self.students = students if students is not None else list()
+        self.students = list(students) if students is not None else []
         self.waitlist = LinkedQueue()
+        self.enrolled_sorted_by = None
 
-    def add_student(self, student: Student) -> None:
-        """Add a student to the course if not already enrolled"""
-        if student not in self.students:
-            self.students.append(EnrollmentRecord(student))
+    def add_student(self, student: "Student") -> None:
+        """Add a student to the course if not already enrolled (Milestone 1 path)."""
+        if any(r.student is student for r in self.students):
+            return
+        self.students.append(EnrollmentRecord(student, date.today()))
+        self.enrolled_sorted_by = None
 
     def get_student_count(self) -> int:
         """Returns the number of enrolled students"""
@@ -117,19 +140,69 @@ class Course: #Mert
     def __str__(self) -> str:
         """Return a human-readable course information"""
         return f"{self.course_code}: ({self.CREDITS} credits)"
-    
-    def request_enroll(self, student:Student, enroll_date=date.today()) -> None:
-        """Add a student to the course if capacity not full"""
-        if len(self.students) == self.capacity:
+
+    def _already_enrolled(self, student) -> bool:
+        return any(r.student is student for r in self.students)
+
+    def request_enroll(self, student: "Student", enroll_date=None) -> None:
+        """Enroll if space; else waitlist. Duplicate roster enroll ignored."""
+        if enroll_date is None:
+            enroll_date = date.today()
+        if self._already_enrolled(student):
+            return
+        if len(self.students) >= self.capacity:
             self.waitlist.enqueue(EnrollmentRecord(student, enroll_date))
+            return
+        self.students.append(EnrollmentRecord(student, enroll_date))
+        self.enrolled_sorted_by = None
+
+    def sort_enrolled(self, by, algorithm) -> None:
+        """Sort roster by name, id, or date using insertion or selection sort."""
+        if by not in ("name", "id", "date"):
+            raise ValueError(f"Unknown sort key {by!r}")
+        n = len(self.students)
+        if n <= 1:
+            self.enrolled_sorted_by = by
+            return
+        if algorithm == "selection":
+            for i in range(n):
+                min_idx = i
+                for j in range(i + 1, n):
+                    if _less_enrollment(self.students[j], self.students[min_idx], by):
+                        min_idx = j
+                self.students[i], self.students[min_idx] = self.students[min_idx], self.students[i]
+        elif algorithm == "insertion":
+            for i in range(1, n):
+                cur = self.students[i]
+                j = i - 1
+                while j >= 0 and _less_enrollment(cur, self.students[j], by):
+                    self.students[j + 1] = self.students[j]
+                    j -= 1
+                self.students[j + 1] = cur
         else:
-            for enrollmentRecord in self.students:
-                if enrollmentRecord.student is not student: ValueError("Student is already enrolled.")
-            self.students.append(EnrollmentRecord(student))
-    
-    def drop(self, student_id:str, enroll_date_for_replacement=date.today()) -> None:
-        ... #remove the student from roster
-        if not self.waitlist.is_empty(): self.request_enroll(self.waitlist.dequeue(), enroll_date_for_replacement)
+            raise ValueError(f"Unknown algorithm {algorithm!r}")
+        self.enrolled_sorted_by = by
+
+    def drop(self, student_id: str, enroll_date_for_replacement=None) -> None:
+        """Drop by id via binary search when sorted by id; promote waitlist if any."""
+        if enroll_date_for_replacement is None:
+            enroll_date_for_replacement = date.today()
+        if self.enrolled_sorted_by != "id":
+            raise ValueError(
+                "Roster must be sorted by student ID before drop; call sort_enrolled('id', <algorithm>)."
+            )
+        if not self.students:
+            raise ValueError("No students enrolled.")
+        idx = recursive_binary_search(self.students, student_id, 0, len(self.students) - 1)
+        if idx == -1:
+            raise ValueError(f"No enrolled student with id {student_id!r}.")
+        self.students.pop(idx)
+        if not self.waitlist.is_empty():
+            next_rec = self.waitlist.dequeue()
+            self.students.append(
+                EnrollmentRecord(next_rec.student, enroll_date_for_replacement)
+            )
+            self.enrolled_sorted_by = None
 
 class Student: #Mert
     """Represents a student
@@ -227,8 +300,10 @@ class University: #Mert
         if course is None: raise KeyError(f"course '{course_code}' not found.")
         return course.students
     
-    def get_common_students(self, course1:Course, course2:Course) -> set:
-        return set(self.get_students_in_course(course1)) & set(self.get_students_in_course(course2))
+    def get_common_students(self, course_code_a: str, course_code_b: str) -> set:
+        a = {r.student for r in self.get_students_in_course(course_code_a)}
+        b = {r.student for r in self.get_students_in_course(course_code_b)}
+        return a & b
 
 def populate_courses(univ:University) -> None: #Ismam
     """Populates the University with course information in course_catalog.csv
@@ -286,16 +361,15 @@ def getDeansList(uni:University) -> list:
         objList.append(uni.get_student(stdId))
     return objList
 
-ex_uni = University()
-print("Populating course catalog...", end=" ")
-populate_courses(ex_uni)
-print("OK.")
-print("Populating students and enrollments...", end=" ")
-populate_students(ex_uni)
-print("OK.")
+if __name__ == "__main__":
+    ex_uni = University()
+    print("Populating course catalog...", end=" ")
+    populate_courses(ex_uni)
+    print("OK.")
+    print("Populating students and enrollments...", end=" ")
+    populate_students(ex_uni)
+    print("OK.")
 
-if __name__=="__main__":
-    #1
     listStudents = ex_uni.get_students_in_course("CSE1010")
     if len(ex_uni.students) > 0: firstStudentObj = list(ex_uni.students.values())[0]
     else: firstStudentObj = None
@@ -334,6 +408,4 @@ if __name__=="__main__":
 
     print(f"Dean's List: (>={DEANGPA} gpa)")
     for student in getDeansList(ex_uni): print(str(student))
-
-listStudents = ex_uni.get_students_in_course("CSE1010")
 
