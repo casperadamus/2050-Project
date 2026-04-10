@@ -1,6 +1,6 @@
 import unittest
 from datetime import date
-from main import Course, EnrollmentRecord, LinkedQueue, Node, Student, recursive_binary_search
+from main import Course, EnrollmentRecord, LinkedQueue, Node, Student, recursive_binary_search 
 
 
 class TestLinkedQueue(unittest.TestCase): # casper
@@ -62,14 +62,14 @@ class TestEnrollmentRecord(unittest.TestCase): # casper
 
     def test_enrollment_record_string_date(self):
         """test enrollment record with string date"""
-        student = Student("STU00001", "1_Student")
+        student = Student("STU00001", "Student_1")
         record = EnrollmentRecord(student, "2026-03-01")
         self.assertIs(record.student, student)
         self.assertEqual(record.enroll_date, "2026-03-01")
 
     def test_enrollment_record_date_object(self):
         """test enrollment record with date object"""
-        student = Student("STU00002", "2_Student")
+        student = Student("STU00002", "Student_2")
         enroll_date = date(2026, 3, 15)
         record = EnrollmentRecord(student, enroll_date)
         self.assertIs(record.student, student)
@@ -86,17 +86,17 @@ class TestCourseCapacityWaitlist(unittest.TestCase): # casper
 
     def test_enroll_to_capacity(self):
         """test enroll until roster hits capacity"""
-        student1 = Student("STU00001", "1_Student")
-        student2 = Student("STU00002", "2_Student")
+        student1 = Student("STU00001", "Student_1")
+        student2 = Student("STU00002", "Student_2")
         self.course.request_enroll(student1, "2026-01-10")
         self.course.request_enroll(student2, "2026-01-11")
         self.assertEqual(len(self.course.students), self.cap)
 
     def test_extra_student_goes_to_waitlist(self):
         """test student goes to waitlist when course is full"""
-        student1 = Student("STU00001", "1_Student")
-        student2 = Student("STU00002", "2_Student")
-        student3 = Student("STU00003", "3_Student")
+        student1 = Student("STU00001", "Student_1")
+        student2 = Student("STU00002", "Student_2")
+        student3 = Student("STU00003", "Student_3")
         self.course.request_enroll(student1, "2026-01-10")
         self.course.request_enroll(student2, "2026-01-11")
         self.course.request_enroll(student3, "2026-01-12")
@@ -105,9 +105,9 @@ class TestCourseCapacityWaitlist(unittest.TestCase): # casper
 
     def test_waitlist_fifo_on_drop(self):
         """test waitlist fifo when student drops"""
-        student1 = Student("STU00001", "1_Student")
-        student2 = Student("STU00002", "2_Student")
-        student3 = Student("STU00003", "3_Student")
+        student1 = Student("STU00001", "Student_1")
+        student2 = Student("STU00002", "Student_2")
+        student3 = Student("STU00003", "Student_3")
         student4 = Student("STU00004", "4_Student")
         self.course.request_enroll(student1, "2026-01-01")
         self.course.request_enroll(student2, "2026-01-02")
@@ -132,7 +132,7 @@ class TestCourseCapacityWaitlist(unittest.TestCase): # casper
 
     def test_duplicate_enroll_ignored(self):
         """test duplicate enroll on roster is ignored"""
-        student = Student("STU00001", "1_Student")
+        student = Student("STU00001", "Student_1")
         self.course.request_enroll(student, "2026-01-01")
         self.course.request_enroll(student, "2026-02-01")
         self.assertEqual(len(self.course.students), 1)
@@ -140,9 +140,9 @@ class TestCourseCapacityWaitlist(unittest.TestCase): # casper
 
     def test_promoted_student_replacement_date(self):
         """test waitlist student gets replacement enroll date"""
-        student1 = Student("STU00010", "1_Student")
-        student2 = Student("STU00011", "2_Student")
-        student3 = Student("STU00012", "3_Student")
+        student1 = Student("STU00010", "Student_1")
+        student2 = Student("STU00011", "Student_2")
+        student3 = Student("STU00012", "Student_3")
         self.course.request_enroll(student1, "2026-01-01")
         self.course.request_enroll(student2, "2026-01-02")
         self.course.request_enroll(student3, "2026-01-03")
@@ -164,9 +164,9 @@ class TestCourseSorting(unittest.TestCase): # casper
     def setUp(self):
         """setting up test"""
         self.course = Course("CSE8888", 3, 10)
-        self.student_a = Student("STU00003", "3_Student")
-        self.student_b = Student("STU00001", "1_Student")
-        self.student_c = Student("STU00002", "2_Student")
+        self.student_a = Student("STU00003", "Student_3")
+        self.student_b = Student("STU00001", "Student_1")
+        self.student_c = Student("STU00002", "Student_2")
         self.course.request_enroll(self.student_a, "2026-03-03")
         self.course.request_enroll(self.student_b, "2026-03-01")
         self.course.request_enroll(self.student_c, "2026-03-02")
@@ -175,50 +175,50 @@ class TestCourseSorting(unittest.TestCase): # casper
         """test sort roster by name insertion sort"""
         self.course.sort_enrolled("name", "insertion")
         names = [r.student.name for r in self.course.students]
-        self.assertEqual(names, ["1_Student", "2_Student", "3_Student"])
-        self.assertEqual(self.course.enrolled_sorted_by, "name")
+        self.assertEqual(names, ["Student_1", "Student_2", "Student_3"])
+        self.assertEqual(self.course.enrolled_sorted_by_attribute, "name")
 
     def test_sort_by_name_selection(self):
         """test sort roster by name selection sort"""
         self.course.sort_enrolled("name", "selection")
         names = [r.student.name for r in self.course.students]
-        self.assertEqual(names, ["1_Student", "2_Student", "3_Student"])
-        self.assertEqual(self.course.enrolled_sorted_by, "name")
+        self.assertEqual(names, ["Student_1", "Student_2", "Student_3"])
+        self.assertEqual(self.course.enrolled_sorted_by_attribute, "name")
 
     def test_sort_by_id_insertion(self):
         """test sort roster by id insertion sort"""
         self.course.sort_enrolled("id", "insertion")
         ids = [r.student.student_id for r in self.course.students]
         self.assertEqual(ids, ["STU00001", "STU00002", "STU00003"])
-        self.assertEqual(self.course.enrolled_sorted_by, "id")
+        self.assertEqual(self.course.enrolled_sorted_by_attribute, "id")
 
     def test_sort_by_id_selection(self):
         """test sort roster by id selection sort"""
         self.course.sort_enrolled("id", "selection")
         ids = [r.student.student_id for r in self.course.students]
         self.assertEqual(ids, ["STU00001", "STU00002", "STU00003"])
-        self.assertEqual(self.course.enrolled_sorted_by, "id")
+        self.assertEqual(self.course.enrolled_sorted_by_attribute, "id")
 
     def test_sort_by_date_insertion(self):
         """test sort roster by date insertion sort"""
         self.course.sort_enrolled("date", "insertion")
         dates = [r.enroll_date for r in self.course.students]
         self.assertEqual(dates, ["2026-03-01", "2026-03-02", "2026-03-03"])
-        self.assertEqual(self.course.enrolled_sorted_by, "date")
+        self.assertEqual(self.course.enrolled_sorted_by_attribute, "date")
 
     def test_sort_by_date_selection(self):
         """test sort roster by date selection sort"""
         self.course.sort_enrolled("date", "selection")
         dates = [r.enroll_date for r in self.course.students]
         self.assertEqual(dates, ["2026-03-01", "2026-03-02", "2026-03-03"])
-        self.assertEqual(self.course.enrolled_sorted_by, "date")
+        self.assertEqual(self.course.enrolled_sorted_by_attribute, "date")
 
     def test_sort_one_student_sets_sorted_key(self):
         """test sort with one student sets enrolled_sorted_by"""
         course = Course("CSE7777", 1, 5)
-        course.request_enroll(Student("STU00001", "1_Student"), "2026-01-01")
+        course.request_enroll(Student("STU00001", "Student_1"), "2026-01-01")
         course.sort_enrolled("id", "selection")
-        self.assertEqual(course.enrolled_sorted_by, "id")
+        self.assertEqual(course.enrolled_sorted_by_attribute, "id")
 
 
 class TestRecursiveBinarySearch(unittest.TestCase): # casper
@@ -227,9 +227,9 @@ class TestRecursiveBinarySearch(unittest.TestCase): # casper
     def setUp(self):
         """setting up test"""
         self.records = [
-            EnrollmentRecord(Student("STU00001", "1_Student"), "2026-01-01"),
-            EnrollmentRecord(Student("STU00002", "2_Student"), "2026-01-02"),
-            EnrollmentRecord(Student("STU00003", "3_Student"), "2026-01-03"),
+            EnrollmentRecord(Student("STU00001", "Student_1"), "2026-01-01"),
+            EnrollmentRecord(Student("STU00002", "Student_2"), "2026-01-02"),
+            EnrollmentRecord(Student("STU00003", "Student_3"), "2026-01-03"),
             EnrollmentRecord(Student("STU00004", "4_Student"), "2026-01-04"),
         ]
         self.high = len(self.records) - 1
@@ -266,8 +266,8 @@ class TestCourseDropSortedById(unittest.TestCase): # casper
     def test_drop_without_sort_by_id_raises(self):
         """test drop raises if roster not sorted by id"""
         course = Course("CSE6666", 3, 5)
-        course.request_enroll(Student("STU00002", "2_Student"), "2026-01-01")
-        course.request_enroll(Student("STU00001", "1_Student"), "2026-01-02")
+        course.request_enroll(Student("STU00002", "Student_2"), "2026-01-01")
+        course.request_enroll(Student("STU00001", "Student_1"), "2026-01-02")
         course.sort_enrolled("name", "insertion")
         with self.assertRaises(ValueError):
             course.drop("STU00001")
@@ -275,18 +275,18 @@ class TestCourseDropSortedById(unittest.TestCase): # casper
     def test_drop_after_sort_by_id(self):
         """test drop works after sort by id"""
         course = Course("CSE6666", 3, 5)
-        course.request_enroll(Student("STU00002", "2_Student"), "2026-01-01")
-        course.request_enroll(Student("STU00001", "1_Student"), "2026-01-02")
+        course.request_enroll(Student("STU00002", "Student_2"), "2026-01-01")
+        course.request_enroll(Student("STU00001", "Student_1"), "2026-01-02")
         course.sort_enrolled("id", "insertion")
         course.drop("STU00002")
         ids = [r.student.student_id for r in course.students]
         self.assertEqual(ids, ["STU00001"])
-        self.assertEqual(course.enrolled_sorted_by, "id")
+        self.assertEqual(course.enrolled_sorted_by_attribute, "id")
 
     def test_drop_missing_student_raises(self):
         """test drop raises for id not on roster"""
         course = Course("CSE5555", 3, 5)
-        course.request_enroll(Student("STU00001", "1_Student"), "2026-01-01")
+        course.request_enroll(Student("STU00001", "Student_1"), "2026-01-01")
         course.sort_enrolled("id", "selection")
         with self.assertRaises(ValueError):
             course.drop("STU99999")

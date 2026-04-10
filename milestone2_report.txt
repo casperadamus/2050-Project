@@ -1,0 +1,5 @@
+Both enqueue and dequeue operations in a LinkedQueue run in O(1) time. This is because the queue keeps track of both the head and tail pointers. Enqueue simply adds a node to the end and updates the tail, while dequeue removes a node from the front and updates the head.
+Insetion sort has a best case of O(n) and a worst case of O(n^2). Selection sort has a O(n^2) for every cases.
+Recursive binary search runs in O(logn) time because it repeadetly halves the list, diving into smaller lengths.
+Sorting is required because binary search depends on the fact that the list is ordered. It compares the target to the median element and decides whether to search left or right through a boolean check of less than or greater.
+Insertion sort is preferred because when the list is already sorted, it can run in O(n) time in that case. Selection sort always runs in O(n^2) time regardless of input order. It can be preferred when minimizing swaps or because its simpler to implement.
