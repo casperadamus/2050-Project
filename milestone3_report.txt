@@ -1,0 +1,12 @@
+Give Big-Otime complexity for put and get in your HashMap.
+Give Big-Otime complexity for each sorting algorithm you implemented.
+Briefly compare your two sorting algorithms: when might one be preferred
+
+Put: O(1) average, O(n) Worst, w/rehash O(n)
+Get: O(1) average, O(n) Worst
+Merge: O(nlogn)
+quick: O(nlogn), O(n^2) worst
+
+Merge sort: Sorted lists, guarantee, stability
+Quick sort: Memory, in place sorting
+The O(n^2) can be fixed by choosing a random pivot.
