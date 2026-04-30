@@ -5,23 +5,110 @@ from datetime import date
 gradeDict = {'A':4.0,'A-':3.7,'B+':3.3,'B':3.0,'B-':2.7,'C+':2.3,'C': 2.0,'C-': 1.7,'D':1.0,'F': 0.0}
 DEANGPA = 3.5
 
-def get_key(enrollment:EnrollmentRecord, by:str):
-        """Return value depending on sorting filter"""
-        student = enrollment.student
-        if by == "name": return int(student.name[8:])
-        elif by == "id": return int(student.student_id[3:])
-        elif by == "date": return enrollment.enroll_date
-        else: raise ValueError("Invalid sort key")
+class HashMap: #Mert
+    def __init__(self, capacity=8):
+        self._capacity = capacity
+        self._size = 0
+        self._buckets = [[] for i in range(self._capacity)]
+    def _hash(self, key):
+        return hash(key) % self._capacity
+    def _load_factor(self):
+        return self._size / self._capacity
+    def _rehash(self):
+        old_buckets = self._buckets
+        self._capacity *= 2
+        self._buckets = [[] for i in range(self._capacity)]
+        self._size = 0
+        for bucket in old_buckets:
+            for key, value in bucket: self.put(key, value)
+    def put(self, key, value):
+        bucket = self._buckets[self._hash(key)]
+        i = 0
+        for k,v in bucket:
+            if k == key:
+                bucket[i] = (key, value)
+                return
+            i+=1
+        bucket.append((key,value))
+        self._size +=1
+        if self._load_factor()>=0.8:
+            self._rehash()
+    def get(self, key):
+        bucket = self._buckets[self._hash(key)]
+        for k,v in bucket:
+            if k == key: return v
+        raise KeyError("Key not found.")
+    def remove(self, key):
+        bucket = self._buckets[self._hash(key)]
+        for k,v in bucket:
+            if k == key: 
+                bucket.remove((k,v))
+                self._size-=1
+                return
+        raise KeyError("Key not found.")
+    def __len__(self):
+        return self._size
+    def __contains__(self,key):
+        index = self._hash(key)
+        return any(k == key for k, v in self._buckets[index])
+    def __repr__(self):
+        pairs = []
+        for bucket in self._buckets:
+            for k,v in bucket:
+                pairs.append(f"{k}: {v}")
+        return "{" + ", ".join(pairs) + "}"
+    
+def get_key(enrollment:EnrollmentRecord, by:str): #Casper
+    """Return value depending on sorting filter"""
+    student = enrollment.student
+    if by == "name": return int(student.name[8:])
+    elif by == "id": return int(student.student_id[3:])
+    elif by == "date": return enrollment.enroll_date
+    else: raise ValueError("Invalid sort key")
 
-def recursive_binary_search(records, target_id, low, high) -> int:
-        if low > high: return -1
-        median_number = (low+high)//2
-        target_key = int(target_id[3:])
-        mid_key = get_key(records[median_number], "id")
-        if mid_key == target_key: return median_number
-        elif mid_key > target_key: return recursive_binary_search(records, target_id, low, median_number - 1)
-        else: return recursive_binary_search(records, target_id, median_number + 1, high)
+def recursive_binary_search(records, target_id, low, high) -> int: #Casper
+    if low > high: return -1
+    median_number = (low+high)//2
+    target_key = int(target_id[3:])
+    mid_key = get_key(records[median_number], "id")
+    if mid_key == target_key: return median_number
+    elif mid_key > target_key: return recursive_binary_search(records, target_id, low, median_number - 1)
+    else: return recursive_binary_search(records, target_id, median_number + 1, high)
 
+def _merge_sort(students:list, by:str)->list: #Mert
+    if len(students)<= 1:
+        return students
+    mid = len(students) // 2
+    left = _merge_sort(students[:mid], by)
+    right = _merge_sort(students[mid:], by)
+    return _merge(left, right, by)
+def _merge(left:list, right:list, by:str)->list: #Mert
+    result = []
+    i=j=0
+    while i < len(left) and j <len(right):
+        if get_key(left[i], by) <= get_key(right[j], by):
+            result.append(left[i])
+            i+=1
+        else:
+            result.append(right[j])
+            j+=1
+    result[len(result):] = left[i:]
+    result[len(result):] = right[j:]
+    return result
+def _quick_sort(students:list, by:str, low:int, high:int): #Mert
+    if low < high:
+        pivot_idx = _partition(students, by, low, high)
+        _quick_sort(students, by, low, pivot_idx - 1)
+        _quick_sort(students, by, pivot_idx + 1, high)
+def _partition(students:list, by:str, low:int, high:int)->int: #Mert
+    pivot = get_key(students[high], by)
+    i = low - 1
+    for j in range(low, high):
+        if get_key(students[j], by) <= pivot:
+            i += 1
+            students[i], students[j] = students[j], students[i]
+    students[i + 1], students[high] = students[high], students[i + 1]
+    return i + 1
 class EnrollmentRecord: #Mert
     """represents an Enrollment Record
 
@@ -107,29 +194,34 @@ class Course: #Mert
         self.waitlist = LinkedQueue()
         self.enrolled_sorted_by_attribute = None
         self.studentCount = 0
+        self.prerequisites = self._load_prerequisites()
+    def _load_prerequisites(self) -> HashMap:
+        prereqs = HashMap()
+        with open("cse_prerequisites.csv", "r") as f:
+            next(f)
+            for line in f:
+                parts = line.strip().split("\t")
+                course = parts[0].strip()
+                prereq = parts[1].strip() if len(parts)>1 else None
+
+                if prereq:
+                    if course in prereqs: prereqs.get(course).append(prereq)
+                    else: prereqs.put(course, [prereq])
+                else:
+                    prereqs.put(course, [])
+        return prereqs
     def _already_enrolled(self, student):
         return any(r.student is student for r in self.students)
     def sort_enrolled(self, by:str, algorithm:str) -> None:
         """Sort students list depending on the algorithm and filter"""
         if by not in ("name", "id", "date"):
             raise ValueError(f"Unknown sort key {by}")
-        students = self.students
-        n = len(students)
+        
         match algorithm:
-            case 'selection':
-                for i in range(n):
-                    min_index = i
-                    for j in range(i+1, n):
-                        if get_key(students[j], by) < get_key(students[min_index],by): min_index = j
-                    students[i], students[min_index] = students[min_index], students[i]
-            case 'insertion':
-                for i in range(1, n):
-                    j = i-1
-                    value = students[i]
-                    while j>=0 and (get_key(students[j], by) > get_key(value, by)):
-                        students[j+1] = students[j]
-                        j-=1
-                    students[j+1] = value
+            case 'merge':
+                self.students = _merge_sort(self.students, by)
+            case 'quick':
+                _quick_sort(self.students, by, 0, len(self.students) - 1)
             case _: raise ValueError(f"Not an integrated sorting algorithm :{str(algorithm)}")
         self.enrolled_sorted_by_attribute = by
     def add_student(self, student: Student) -> None:
@@ -146,6 +238,10 @@ class Course: #Mert
     def request_enroll(self, student:Student, enroll_date=date.today()) -> None:
         """Add a student to the course if capacity not full"""
         if self._already_enrolled(student): return
+        req = self.prerequisites.get(self.course_code)
+        if req: 
+            if [p for p in req if p not in student.courses]:
+                raise ValueError("Student has not fulfilled prereqs.")
         if len(self.students) >= self.capacity:
             self.waitlist.enqueue(EnrollmentRecord(student, enroll_date))
         else:
@@ -258,7 +354,7 @@ class University: #Mert
     def get_common_students(self, course1:Course, course2:Course) -> set:
         return set(self.get_students_in_course(course1)) & set(self.get_students_in_course(course2))
 
-def populate_courses(univ:University) -> None: #Ismam
+def populate_courses(univ:University) -> None: #Mert
     """Populates the University with course information in course_catalog.csv
 
     Parameters
@@ -272,7 +368,7 @@ def populate_courses(univ:University) -> None: #Ismam
             credits = int(row['credits'])
             capacity = int(row['capacity'])
             if not univ.get_course(course_id): univ.add_course(course_id, credits, capacity)
-def populate_students(univ:University) -> None: #Ismam
+def populate_students(univ:University) -> None: #Mert
     """Populates the University with information from university_data.csv
 
     Parameters
@@ -294,7 +390,7 @@ def populate_students(univ:University) -> None: #Ismam
                     univ.deansList.append(std_id)
             # else:
             #     print("Duplicate or invalid student ID found:", row['student_id'])
-def getDeansList(uni:University) -> list:
+def getDeansList(uni:University) -> list: #Mert
     """Converts the student id storing list from the University class to object list
 
     Paramaters
